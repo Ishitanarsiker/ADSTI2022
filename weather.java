@@ -12,11 +12,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import java.util.HashMap;
 import javax.net.ssl.SSLParameters;
 
 public class WeatherManager {
 
+	
     public static void main(String[] args) {
         WeatherFetcher weatherFetcher = new WeatherFetcher();
         ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -27,17 +28,24 @@ public class WeatherManager {
 
 class WeatherFetcher implements Runnable {
 
+	private static weatherObject[] weatherCache;
+	HashMap<Integer, Float> cityHashMap = new HashMap<Integer, Float>();
     private static final Pattern p = Pattern.compile("\"the_temp\":([0-9]+)\\.([0-9]+)");
 
     private String temperature = null;
 
     public void run() {
         long startTime = System.currentTimeMillis();
-        System.out.println(getTemperature());
+        
+        System.out.println(getTemperature(areaCode));
         System.out.println("Getting temperature took " + (System.currentTimeMillis() - startTime) + " milliseconds");
     }
-
-    public String getTemperature() {
+    
+    public int getAreaCode(String location){
+        
+        return 0;
+    }
+    public String getTemperature(int areaCode) {
         try {
             var client = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(60))
@@ -49,16 +57,20 @@ class WeatherFetcher implements Runnable {
                     .sslParameters(new SSLParameters())
                     .build();
             var httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create("https://www.metaweather.com/api/location/44418/"))
+                    .uri(URI.create("https://www.metaweather.com/api/location/"+areaCode+"/"))
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(httpRequest, BodyHandlers.ofString());
+            
             return  parseOutTemperature(response.body());
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
+
+    
+    
     private String parseOutTemperature(String json) {
         Matcher m = p.matcher(json);
         if (m.find()) {
@@ -66,4 +78,14 @@ class WeatherFetcher implements Runnable {
         }
         return "unknown";
     }
+}
+
+
+class weatherObject{
+	
+	String city ;
+	float temperature ;
+	long accessTime;
+	
+	
 }
